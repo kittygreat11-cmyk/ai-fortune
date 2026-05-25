@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI 占卜馆</title>
+    <style>
+        /* ===== 基础重置 ===== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(160deg, #1a1035 0%, #2d1b4e 30%, #3d1f5e 60%, #2a1545 100%);
+            position: relative;
+        }
+        body::-webkit-scrollbar { width: 4px; }
+        body::-webkit-scrollbar-thumb { background: rgba(232,160,191,0.3); border-radius: 10px; }
+
+        /* ===== 星空 + 花瓣 ===== */
+        .stars {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .star {
+            position: absolute;
+            border-radius: 50%;
+            animation: twinkle var(--dur) ease-in-out infinite alternate;
+        }
+        .star.white { background: #fff; }
+        .star.pink { background: #f0b4d8; }
+        .star.gold { background: #f0d080; }
+        @keyframes twinkle {
+            0% { opacity: 0.15; transform: scale(0.6); }
+            100% { opacity: 1; transform: scale(1.2); }
+        }
+        /* 飘落花瓣 */
+        .petal {
+            position: fixed;
+            font-size: 16px;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.3;
+            animation: petalFall var(--fall-dur) linear infinite;
+            animation-delay: var(--fall-delay);
+        }
+        @keyframes petalFall {
+            0% { transform: translateY(-20px) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.3; }
+            90% { opacity: 0.2; }
+            100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+        }
+        .aurora {
+            position: fixed;
+            top: -20%;
+            left: -10%;
+            width: 120%;
+            height: 70%;
+            background: radial-gradient(ellipse at 25% 50%, rgba(232,160,191,0.1) 0%, transparent 55%),
+                        radial-gradient(ellipse at 70% 40%, rgba(200,150,255,0.08) 0%, transparent 55%),
+                        radial-gradient(ellipse at 50% 60%, rgba(255,200,220,0.06) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+            animation: auroraDrift 12s ease-in-out infinite alternate;
+        }
+        @keyframes auroraDrift {
+            0% { transform: translateX(0) scale(1); opacity: 0.6; }
+            100% { transform: translateX(6%) scale(1.12); opacity: 1; }
+        }
+
+        /* ===== 主容器 ===== */
+        .app-container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 440px;
+            margin: 0 auto;
+            padding: 14px 14px 24px;
+            text-align: center;
+        }
+
+        /* ===== 标题 ===== */
+        .header {
+            padding-top: 8px;
+            margin-bottom: 14px;
+        }
+        .header h1 {
+            font-size: 26px;
+            font-weight: 600;
+            background: linear-gradient(135deg, #f0b4d8, #e8a0bf, #d4729a, #f0c0d8);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: roseShine 4s ease-in-out infinite;
+            letter-spacing: 2px;
+        }
+        @keyframes roseShine {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        .header .subtitle {
+            color: rgba(240,180,216,0.5);
+            font-size: 11px;
+            margin-top: 3px;
+            letter-spacing: 3px;
+        }
+
+        /* ===== Tab 导航 ===== */
+        .tabs {
+            display: flex;
+            gap: 3px;
+            justify-content: center;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            padding: 6px 12px;
+            border: 1px solid rgba(232,160,191,0.1);
+            border-radius: 18px;
+            background: rgba(232,160,191,0.04);
+            color: rgba(240,180,216,0.45);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+        .tab-btn:hover { background: rgba(232,160,191,0.1); color: rgba(240,180,216,0.7); }
+        .tab-btn.active {
+            background: linear-gradient(135deg, rgba(232,160,191,0.2), rgba(212,114,154,0.15));
+            border-color: rgba(232,160,191,0.3);
+            color: #f0b4d8;
+            box-shadow: 0 0 14px rgba(232,160,191,0.1);
+        }
+
+        /* ===== 生肖星座选择器 ===== */
+        .selector-bar {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        .selector-bar select {
+            padding: 5px 12px;
+            border: 1px solid rgba(232,160,191,0.15);
+            border-radius: 14px;
+            background: rgba(232,160,191,0.06);
+            color: rgba(240,180,216,0.7);
+            font-size: 11px;
+            outline: none;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            text-align: center;
+        }
+        .selector-bar select option { background: #2d1b4e; color: #f0d0e0; }
+        .selector-bar select:focus { border-color: rgba(232,160,191,0.35); }
+
+        /* ===== Tab 内容区 ===== */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* ===== 运势卡片 (翻牌) ===== */
+        .card-wrapper {
+            perspective: 1200px;
+            margin: 0 auto 16px;
+            width: 260px;
+            height: 360px;
+        }
+        .card {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+            cursor: pointer;
+        }
+        .card.flipped { transform: rotateY(180deg); }
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px 16px;
+        }
+        .card-front {
+            background: linear-gradient(145deg, #2a1545, #1d0d35);
+            border: 1px solid rgba(240,180,216,0.15);
+            box-shadow: 0 8px 32px rgba(200,150,255,0.12), inset 0 1px 0 rgba(240,180,216,0.08);
+        }
+        .card-front .mystic-symbol { font-size: 48px; margin-bottom: 14px; opacity: 0.7; filter: hue-rotate(300deg); }
+        .card-front .tap-hint { color: rgba(240,180,216,0.4); font-size: 14px; letter-spacing: 2px; animation: pulse 2s ease-in-out infinite; }
+        .card-front .tap-hint-sub { color: rgba(240,180,216,0.18); font-size: 10px; margin-top: 5px; }
+        @keyframes pulse { 0%, 100% { opacity: 0.35; transform: scale(1); } 50% { opacity: 0.7; transform: scale(1.03); } }
+
+        .card-back {
+            background: linear-gradient(145deg, #2a1545, #1d0d35);
+            border: 1px solid rgba(240,180,216,0.2);
+            box-shadow: 0 8px 32px rgba(200,150,255,0.15), inset 0 1px 0 rgba(240,180,216,0.08);
+            transform: rotateY(180deg);
+            padding: 18px 14px;
+            overflow-y: auto;
+        }
+        .card-back::-webkit-scrollbar { width: 3px; }
+        .card-back::-webkit-scrollbar-thumb { background: rgba(232,160,191,0.25); border-radius: 10px; }
+
+        .fortune-level { font-size: 38px; font-weight: 700; margin-bottom: 2px; letter-spacing: 2px; }
+        .fortune-level.daji { color: #ff7b9c; text-shadow: 0 0 24px rgba(255,107,129,0.5); }
+        .fortune-level.ji { color: #f09abf; text-shadow: 0 0 20px rgba(240,154,191,0.4); }
+        .fortune-level.zhongji { color: #e8b88a; text-shadow: 0 0 20px rgba(232,184,138,0.35); }
+        .fortune-level.xiaoji { color: #a8c8ff; text-shadow: 0 0 20px rgba(168,200,255,0.35); }
+        .fortune-level.ping { color: #c0b0c8; }
+        .fortune-level.xiong { color: #a090a8; }
+        .fortune-level.daxiong { color: #706078; }
+        .fortune-label { font-size: 11px; color: rgba(240,180,216,0.3); margin-bottom: 8px; }
+        .fortune-desc { color: rgba(240,210,230,0.8); font-size: 12px; line-height: 1.8; margin-bottom: 10px; text-align: left; }
+
+        .score-section { width: 100%; }
+        .score-item { display: flex; align-items: center; margin-bottom: 4px; }
+        .score-item .label { color: rgba(240,180,216,0.5); font-size: 10px; width: 34px; text-align: left; flex-shrink: 0; }
+        .score-item .bar-bg { flex: 1; height: 4px; background: rgba(240,180,216,0.06); border-radius: 10px; overflow: hidden; margin: 0 5px; }
+        .score-item .bar-fill { height: 100%; border-radius: 10px; transition: width 1s ease; width: 0; }
+        .score-item .value { color: rgba(240,180,216,0.4); font-size: 9px; width: 24px; text-align: right; }
+
+        .lucky-info { display: flex; justify-content: center; gap: 14px; margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(240,180,216,0.06); }
+        .lucky-info .item { text-align: center; }
+        .lucky-info .item .lbl { color: rgba(240,180,216,0.25); font-size: 8px; }
+        .lucky-info .item .val { color: rgba(240,210,230,0.75); font-size: 13px; font-weight: 500; }
+
+        /* ===== 本周/本月建议 ===== */
+        .weekly-tips {
+            margin: 12px auto 0;
+            padding: 12px 14px;
+            background: rgba(232,160,191,0.04);
+            border: 1px solid rgba(232,160,191,0.08);
+            border-radius: 14px;
+            text-align: left;
+        }
+        .weekly-tips .title {
+            color: rgba(240,180,216,0.5);
+            font-size: 10px;
+            letter-spacing: 3px;
+            margin-bottom: 6px;
+            text-align: center;
+        }
+        .weekly-tips .tip-item {
+            color: rgba(240,210,230,0.65);
+            font-size: 12px;
+            line-height: 1.8;
+            padding: 3px 0;
+        }
+        .weekly-tips .tip-item::before {
+            content: '🌸 ';
+            opacity: 0.5;
+        }
+
+        /* ===== 按钮 ===== */
+        .actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 12px; }
+        .btn {
+            padding: 9px 22px;
+            border: none;
+            border-radius: 25px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: 0.5px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #f0b4d8, #d4729a);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(212,114,154,0.3);
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 22px rgba(212,114,154,0.4); }
+        .btn-primary:active { transform: translateY(0); }
+        .btn-secondary {
+            background: rgba(232,160,191,0.06);
+            color: rgba(240,180,216,0.55);
+            border: 1px solid rgba(232,160,191,0.1);
+        }
+        .btn-secondary:hover { background: rgba(232,160,191,0.1); color: rgba(240,180,216,0.8); }
+
+        /* ===== 历史记录 ===== */
+        .history-section { margin-top: 14px; display: none; }
+        .history-section.show { display: block; }
+        .history-section h3 { color: rgba(240,180,216,0.25); font-size: 10px; letter-spacing: 3px; margin-bottom: 6px; }
+        .history-list { display: flex; gap: 5px; justify-content: center; flex-wrap: wrap; }
+        .history-item {
+            width: 28px; height: 28px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 9px; font-weight: 600;
+            border: 1px solid rgba(240,180,216,0.08);
+            cursor: pointer; transition: all 0.2s;
+        }
+        .history-item:hover { transform: scale(1.15); border-color: rgba(240,180,216,0.25); }
+
+        /* ===== 加载 ===== */
+        .loading-spinner {
+            display: none; width: 32px; height: 32px;
+            border: 3px solid rgba(240,180,216,0.08);
+            border-top-color: #f0b4d8;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 40px auto;
+        }
+        .loading-spinner.show { display: block; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ===== 塔罗 ===== */
+        .tarot-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin: 0 auto 12px;
+            max-width: 300px;
+        }
+        .tarot-card {
+            aspect-ratio: 3/5;
+            border-radius: 12px;
+            background: linear-gradient(145deg, #2a1545, #1d0d35);
+            border: 1px solid rgba(240,180,216,0.06);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            padding: 6px;
+            position: relative;
+        }
+        .tarot-card:hover { border-color: rgba(240,180,216,0.15); transform: translateY(-3px); }
+        .tarot-card.selected { border-color: rgba(240,180,216,0.4); box-shadow: 0 0 18px rgba(232,160,191,0.15); }
+        .tarot-card .card-icon { font-size: 24px; margin-bottom: 3px; }
+        .tarot-card .card-name { color: rgba(240,180,216,0.45); font-size: 9px; text-align: center; line-height: 1.2; }
+        .tarot-card .card-badge {
+            position: absolute; top: -5px; right: -5px;
+            background: linear-gradient(135deg, #f0b4d8, #d4729a);
+            color: #fff;
+            font-size: 8px;
+            font-weight: 700;
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .tarot-reading {
+            margin-top: 10px;
+            padding: 14px;
+            background: rgba(232,160,191,0.04);
+            border: 1px solid rgba(232,160,191,0.08);
+            border-radius: 14px;
+            text-align: left;
+            display: none;
+        }
+        .tarot-reading.show { display: block; }
+        .tarot-reading .reading-title {
+            color: rgba(240,180,216,0.5);
+            font-size: 10px;
+            letter-spacing: 2px;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        .tarot-reading .reading-item {
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(240,180,216,0.04);
+        }
+        .tarot-reading .reading-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .tarot-reading .reading-item .ri-name { color: #f0b4d8; font-size: 12px; font-weight: 600; margin-bottom: 2px; }
+        .tarot-reading .reading-item .ri-pos { color: rgba(240,180,216,0.3); font-size: 9px; margin-bottom: 3px; }
+        .tarot-reading .reading-item .ri-meaning { color: rgba(240,210,230,0.7); font-size: 11px; line-height: 1.6; }
+
+        /* ===== 解梦 ===== */
+        .dream-input-area {
+            margin: 0 auto 12px;
+            max-width: 300px;
+        }
+        .dream-input-area textarea {
+            width: 100%;
+            height: 90px;
+            padding: 12px 14px;
+            border: 1px solid rgba(232,160,191,0.12);
+            border-radius: 14px;
+            background: rgba(232,160,191,0.04);
+            color: rgba(240,210,230,0.75);
+            font-size: 12px;
+            line-height: 1.6;
+            resize: none;
+            outline: none;
+            font-family: inherit;
+        }
+        .dream-input-area textarea:focus { border-color: rgba(232,160,191,0.3); }
+        .dream-input-area textarea::placeholder { color: rgba(240,180,216,0.2); }
+        .dream-input-area .dream-hint {
+            color: rgba(240,180,216,0.2);
+            font-size: 10px;
+            margin-top: 5px;
+        }
+
+        .dream-result {
+            margin-top: 10px;
+            padding: 14px;
+            background: rgba(232,160,191,0.04);
+            border: 1px solid rgba(232,160,191,0.08);
+            border-radius: 14px;
+            text-align: left;
+            display: none;
+        }
+        .dream-result.show { display: block; }
+        .dream-result .dr-title {
+            color: rgba(240,180,216,0.5);
+            font-size: 10px;
+            letter-spacing: 2px;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        .dream-result .dr-content { color: rgba(240,210,230,0.75); font-size: 12px; line-height: 1.9; }
+        .dream-result .dr-symbols { margin-top: 8px; }
+        .dream-result .dr-symbols .sym-tag {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            background: rgba(232,160,191,0.1);
+            color: rgba(240,180,216,0.55);
+            font-size: 10px;
+            margin: 2px 3px;
+        }
+
+        /* ===== 页脚 ===== */
+        .footer { color: rgba(240,180,216,0.1); font-size: 9px; margin-top: 18px; letter-spacing: 1px; }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 480px) {
+            .app-container { padding: 10px; }
+            .card-wrapper { width: 240px; height: 340px; }
+            .header h1 { font-size: 22px; }
+            .fortune-level { font-size: 34px; }
+            .tarot-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+            .tab-btn { padding: 5px 10px; font-size: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="stars" id="stars"></div>
+    <div class="aurora"></div>
+
+    <div class="app-container">
+        <!-- 标题 -->
+        <div class="header">
+            <h1>✦ 灵境占卜 ✦</h1>
+            <div class="subtitle">— 每日 · 每周 · 塔罗 · 解梦 —</div>
+        </div>
+
+        <!-- Tab 导航 -->
+        <div class="tabs" id="tabNav">
+            <button class="tab-btn active" data-tab="daily">📅 每日</button>
+            <button class="tab-btn" data-tab="weekly">📆 本周</button>
+            <button class="tab-btn" data-tab="monthly">🗓️ 本月</button>
+            <button class="tab-btn" data-tab="tarot">🎴 塔罗</button>
+            <button class="tab-btn" data-tab="dream">🌙 解梦</button>
+        </div>
+
+        <!-- 生肖星座选择 -->
+        <div class="selector-bar">
+            <select id="zodiacSelect"><option value="">生肖</option><option>鼠</option><option>牛</option><option>虎</option><option>兔</option><option>龙</option><option>蛇</option><option>马</option><option>羊</option><option>猴</option><option>鸡</option><option>狗</option><option>猪</option></select>
+            <select id="constellationSelect"><option value="">星座</option><option>白羊座</option><option>金牛座</option><option>双子座</option><option>巨蟹座</option><option>狮子座</option><option>处女座</option><option>天秤座</option><option>天蝎座</option><option>射手座</option><option>摩羯座</option><option>水瓶座</option><option>双鱼座</option></select>
+        </div>
+
+        <!-- ============ TAB: 每日 ============ -->
+        <div class="tab-content active" id="tab-daily">
+            <div class="card-wrapper">
+                <div class="card" id="dailyCard" onclick="drawDaily()">
+                    <div class="card-face card-front">
+                        <div class="mystic-symbol">☯</div>
+                        <div class="tap-hint">轻点翻牌 · 问今日运</div>
+                        <div class="tap-hint-sub">一日吉凶 尽在掌中</div>
+                    </div>
+                    <div class="card-face card-back">
+                        <div class="fortune-level" id="dLevel">大吉</div>
+                        <div class="fortune-label" id="dLabel">—— 万事亨通 ——</div>
+                        <div class="fortune-desc" id="dDesc">紫气东来，祥云缭绕。</div>
+                        <div class="score-section">
+                            <div class="score-item"><span class="label">事业</span><div class="bar-bg"><div class="bar-fill" style="background:#ff6b81" id="dS1"></div></div><span class="value" id="dV1">0</span></div>
+                            <div class="score-item"><span class="label">财运</span><div class="bar-bg"><div class="bar-fill" style="background:#f7e05e" id="dS2"></div></div><span class="value" id="dV2">0</span></div>
+                            <div class="score-item"><span class="label">爱情</span><div class="bar-bg"><div class="bar-fill" style="background:#ff9ff3" id="dS3"></div></div><span class="value" id="dV3">0</span></div>
+                            <div class="score-item"><span class="label">健康</span><div class="bar-bg"><div class="bar-fill" style="background:#70a1ff" id="dS4"></div></div><span class="value" id="dV4">0</span></div>
+                        </div>
+                        <div class="lucky-info">
+                            <div class="item"><div class="lbl">幸运数字</div><div class="val" id="dNum">7</div></div>
+                            <div class="item"><div class="lbl">幸运颜色</div><div class="val" id="dColor">金色</div></div>
+                            <div class="item"><div class="lbl">宜</div><div class="val" id="dDo">纳财</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="loading-spinner" id="loadingSpinner"></div>
+            <div class="actions">
+                <button class="btn btn-primary" onclick="drawDaily()">🔮 卜一卦</button>
+                <button class="btn btn-secondary" onclick="shareDaily()">📤 分享</button>
+                <button class="btn btn-secondary" onclick="toggleHistory()">📜 记录</button>
+            </div>
+            <div class="history-section" id="historySection">
+                <h3>— 往期运势 —</h3>
+                <div class="history-list" id="historyList"></div>
+            </div>
+        </div>
+
+        <!-- ============ TAB: 本周 ============ -->
+        <div class="tab-content" id="tab-weekly">
+            <div class="card-wrapper">
+                <div class="card" id="weeklyCard" onclick="drawWeekly()">
+                    <div class="card-face card-front">
+                        <div class="mystic-symbol">📆</div>
+                        <div class="tap-hint">轻点翻牌 · 看一周运</div>
+                        <div class="tap-hint-sub">本周高低起伏 提前知晓</div>
+                    </div>
+                    <div class="card-face card-back">
+                        <div class="fortune-level" id="wLevel">中吉</div>
+                        <div class="fortune-label" id="wLabel">—— 渐入佳境 ——</div>
+                        <div class="fortune-desc" id="wDesc">本周运势总结</div>
+                        <div class="score-section">
+                            <div class="score-item"><span class="label">事业</span><div class="bar-bg"><div class="bar-fill" style="background:#ff6b81" id="wS1"></div></div><span class="value" id="wV1">0</span></div>
+                            <div class="score-item"><span class="label">财运</span><div class="bar-bg"><div class="bar-fill" style="background:#f7e05e" id="wS2"></div></div><span class="value" id="wV2">0</span></div>
+                            <div class="score-item"><span class="label">爱情</span><div class="bar-bg"><div class="bar-fill" style="background:#ff9ff3" id="wS3"></div></div><span class="value" id="wV3">0</span></div>
+                            <div class="score-item"><span class="label">健康</span><div class="bar-bg"><div class="bar-fill" style="background:#70a1ff" id="wS4"></div></div><span class="value" id="wV4">0</span></div>
+                        </div>
+                        <div class="lucky-info">
+                            <div class="item"><div class="lbl">幸运日</div><div class="val" id="wDay">周三</div></div>
+                            <div class="item"><div class="lbl">幸运色</div><div class="val" id="wColor">金色</div></div>
+                            <div class="item"><div class="lbl">关键词</div><div class="val" id="wKw">机遇</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- 本周建议 -->
+            <div class="weekly-tips" id="weeklyTips">
+                <div class="title">✦ 本周建议 ✦</div>
+                <div class="tip-item" id="wt1">先卜卦查看本周建议</div>
+                <div class="tip-item" id="wt2">⬆️</div>
+                <div class="tip-item" id="wt3">⬆️</div>
+            </div>
+            <div class="actions">
+                <button class="btn btn-primary" onclick="drawWeekly()">📆 测本周</button>
+                <button class="btn btn-secondary" onclick="shareWeekly()">📤 分享</button>
+            </div>
+        </div>
+
+        <!-- ============ TAB: 本月 ============ -->
+        <div class="tab-content" id="tab-monthly">
+            <div class="card-wrapper">
+                <div class="card" id="monthlyCard" onclick="drawMonthly()">
+                    <div class="card-face card-front">
+                        <div class="mystic-symbol">🗓️</div>
+                        <div class="tap-hint">轻点翻牌 · 探整月运</div>
+                        <div class="tap-hint-sub">本月大势 了然于心</div>
+                    </div>
+                    <div class="card-face card-back">
+                        <div class="fortune-level" id="mLevel">吉</div>
+                        <div class="fortune-label" id="mLabel">—— 月运如虹 ——</div>
+                        <div class="fortune-desc" id="mDesc">本月运势概述</div>
+                        <div class="score-section">
+                            <div class="score-item"><span class="label">事业</span><div class="bar-bg"><div class="bar-fill" style="background:#ff6b81" id="mS1"></div></div><span class="value" id="mV1">0</span></div>
+                            <div class="score-item"><span class="label">财运</span><div class="bar-bg"><div class="bar-fill" style="background:#f7e05e" id="mS2"></div></div><span class="value" id="mV2">0</span></div>
+                            <div class="score-item"><span class="label">爱情</span><div class="bar-bg"><div class="bar-fill" style="background:#ff9ff3" id="mS3"></div></div><span class="value" id="mV3">0</span></div>
+                            <div class="score-item"><span class="label">健康</span><div class="bar-bg"><div class="bar-fill" style="background:#70a1ff" id="mS4"></div></div><span class="value" id="mV4">0</span></div>
+                        </div>
+                        <div class="lucky-info">
+                            <div class="item"><div class="lbl">贵人方位</div><div class="val" id="mDir">正南</div></div>
+                            <div class="item"><div class="lbl">本月吉数</div><div class="val" id="mNum">8</div></div>
+                            <div class="item"><div class="lbl">宜</div><div class="val" id="mDo">布局</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- 每月建议 -->
+            <div class="weekly-tips" id="monthlyTips">
+                <div class="title">✦ 本月提点 ✦</div>
+                <div class="tip-item" id="mt1">先卜卦查看本月指引</div>
+                <div class="tip-item" id="mt2">⬆️</div>
+                <div class="tip-item" id="mt3">⬆️</div>
+            </div>
+            <div class="actions">
+                <button class="btn btn-primary" onclick="drawMonthly()">🗓️ 测本月</button>
+                <button class="btn btn-secondary" onclick="shareMonthly()">📤 分享</button>
+            </div>
+        </div>
+
+        <!-- ============ TAB: 塔罗 ============ -->
+        <div class="tab-content" id="tab-tarot">
+            <p style="color:rgba(255,255,255,0.3);font-size:12px;margin-bottom:10px;">从下面的牌中选出 <strong style="color:#f7e05e;">3 张</strong>，或直接点「随机抽牌」</p>
+            <div class="tarot-grid" id="tarotGrid"></div>
+            <div class="tarot-reading" id="tarotReading">
+                <div class="reading-title">✦ 牌面解读 ✦</div>
+                <div id="tarotResult"></div>
+            </div>
+            <div class="actions" style="margin-top:10px;">
+                <button class="btn btn-primary" onclick="drawTarot()">🎴 随机抽 3 张</button>
+                <button class="btn btn-secondary" onclick="clearTarot()">🔄 重选</button>
+            </div>
+        </div>
+
+        <!-- ============ TAB: 解梦 ============ -->
+        <div class="tab-content" id="tab-dream">
+            <div class="dream-input-area">
+                <textarea id="dreamInput" placeholder="描述你的梦境……&#10;例如：我梦见自己在天上飞，下面是一片大海……"></textarea>
+                <div class="dream-hint">描述越详细，解梦越精准 ✨</div>
+            </div>
+            <div class="dream-result" id="dreamResult">
+                <div class="dr-title">✦ 梦境解析 ✦</div>
+                <div class="dr-content" id="dreamContent"></div>
+                <div class="dr-symbols" id="dreamSymbols"></div>
+            </div>
+            <div class="actions">
+                <button class="btn btn-primary" onclick="interpretDream()">🌙 解梦</button>
+                <button class="btn btn-secondary" onclick="clearDream()">🔄 清空</button>
+            </div>
+        </div>
+
+        <div class="footer">
+            🌸 已有 <span id="busuanzi_value_site_pv" style="color:rgba(240,180,216,0.4);font-weight:600;">0</span> 位有缘人造访 · AI 灵境 · 仅供娱乐
+        </div>
+    </div>
+
+    <script>
+        // ====================================================================
+        //  共用数据
+        // ====================================================================
+        const LEVELS = [
+            { key: '大吉', label: '—— 万事亨通 ——', weight: 5, class: 'daji' },
+            { key: '吉', label: '—— 诸事顺遂 ——', weight: 15, class: 'ji' },
+            { key: '中吉', label: '—— 平顺安康 ——', weight: 25, class: 'zhongji' },
+            { key: '小吉', label: '—— 小有所获 ——', weight: 25, class: 'xiaoji' },
+            { key: '平', label: '—— 波澜不惊 ——', weight: 18, class: 'ping' },
+            { key: '凶', label: '—— 宜守不宜攻 ——', weight: 8, class: 'xiong' },
+            { key: '大凶', label: '—— 谨言慎行 ——', weight: 4, class: 'daxiong' },
+        ];
+
+        const DAILY_DESC = {
+            '大吉': ['紫气东来，祥云缭绕。今日气场全开，贵人暗中相助，但凡出手必有回响。','日月同辉，吉星高照。无论工作还是生活，都将迎来意想不到的惊喜。','天时地利人和，三者皆备。今日宜大胆决策，宜表白心意，宜投资理财。'],
+            '吉': ['微风和煦，阳光正好。今日虽无大喜，但事事顺心，小确幸不断。','云开见日，豁然开朗。之前困扰的问题，今日会有转机出现。','顺水行舟，不费力而自进。保持平常心，好运自然来。'],
+            '中吉': ['平平淡淡才是真。今日无大喜也无大忧，适合按部就班做好分内事。','稳步前行，不急不躁。今日不宜冒进，稳扎稳打反而能有意外的收获。','静水流深，暗藏机遇。今日适合观察和思考，别急着做决定。'],
+            '小吉': ['山重水复疑无路，柳暗花明又一村。今日小有收获，值得开心。','一份耕耘一分收获。今日的努力不会白费，点滴积累终成江海。','麻雀虽小五脏俱全。今日的收获虽然不大，但都是实实在在的。'],
+            '平': ['无风无浪，平淡是福。今日宜休息养生，调整状态。','波澜不惊的一天。不用强求出彩，平稳度过也是一种智慧。','此时无声胜有声。今日适合独处、读书、思考，养精蓄锐。'],
+            '凶': ['乌云遮日，宜静不宜动。今日凡事多留个心眼，重要决定推迟再做。','逆水行舟，不进则退。今日可能会遇到一些阻力，保持冷静是关键。','天有不测风云。今日出门留意安全，沟通注意语气，忍一时风平浪静。'],
+            '大凶': ['诸事不宜，宜宅在家中。今日不宜做重要决定，不宜远行，不宜争执。','黑云压城城欲摧。今日务必低调行事，谨言慎行，破财消灾。','黎明前的至暗时刻。今日虽凶，但熬过去就是晴天，保持希望。'],
+        };
+        const WEEKLY_DESC = {
+            '大吉': ['本周运势极佳！事业上有望取得突破性进展，是发力冲刺的好时机。','星辰眷顾的一周。之前的努力将在本周看到回报，保持冲劲！','天时地利人和齐聚。本周适合开启新计划、约见重要人物。'],
+            '吉': ['本周整体向好，各项工作进展顺利，人际关系和谐。','风平浪静中暗藏机遇。本周适合稳中求进，步步为营。','吉星高照，诸事顺遂。本周的好运来自于你的坚持和准备。'],
+            '中吉': ['本周平稳中见真章。不急不躁，按照自己的节奏推进就好。','稳扎稳打的一周。虽然不会有惊天动地的变化，但积累就是胜利。','耐住性子，静待花开。本周适合沉淀和学习，为下周蓄力。'],
+            '小吉': ['本周小有收获，但需戒骄戒躁。每一天的努力都不会白费。','点滴积累终成江海。本周的每一个小进步，都在为未来铺路。','麻雀虽小五脏俱全。本周的收获虽不大，但胜在踏实。'],
+            '平': ['平平淡淡才是真。本周宜休养生息，调整节奏，不必强求。','波澜不惊的一周。适合做整理、复盘、规划，为未来做准备。','此时无声胜有声。本周适合独处、思考、充电。'],
+            '凶': ['本周需多加小心，重要决策建议延后。注意人际关系中的摩擦。','逆水行舟，不进则退。本周可能会遇到阻力，保持冷静低调。','万事以稳为主。本周不宜冒进，保守就是最好的策略。'],
+            '大凶': ['本周诸事不宜冲动。务必谨言慎行，避免与人发生冲突。','乌云压顶的一周。保持低调，熬过去就是晴天。','黎明前的至暗时刻。本周虽难，但请相信转机就在前方。'],
+        };
+        const MONTHLY_DESC = {
+            '大吉': ['本月是难得的黄金期！事业财运双旺，适合大胆布局、全力冲刺。','星辰眷顾之月。之前的耕耘将在本月迎来丰收，好好把握！','天时地利人和齐聚。本月适合开启人生新篇章。'],
+            '吉': ['本月整体运势向好。各项工作稳步推进，人际关系融洽。','吉星高照的一个月。月中前后会有好消息传来。','顺风顺水的一个月。保持好节奏，好运自然相伴。'],
+            '中吉': ['本月平稳中蕴含机遇。上半月宜积蓄力量，下半月宜发力。','不急不躁，稳扎稳打。本月适合做中长期规划和布局。','静水流深。本月看似平淡，实则在为更大的突破打基础。'],
+            '小吉': ['本月小有斩获。虽然没有惊天动地的大事，但每一天都在进步。','积少成多的一个月。本月适合持续学习和积累。','小步快跑的一个月。不求大喜，但求日日精进。'],
+            '平': ['本月波澜不惊。适合休养生息、整理内务、充电学习。','平平淡淡才是真。本月不用追求大起大落，安稳就是福。','静下心来沉淀的一个月。适合读书、思考、规划未来。'],
+            '凶': ['本月需谨慎行事。重大决策建议延后，注意财务安全。','阻力重重的一个月。保持低调，避免与人争执和纠纷。','天有不测风云。本月凡事多留个心眼，安全第一。'],
+            '大凶': ['本月诸事不宜冒进。务必低调再低调，谨言慎行。','风雨欲来的一个月。守住底线，熬过去就是新生。','黎明前的黑暗。本月虽然艰难，但请保持希望和信心。'],
+        };
+
+        const LUCKY_COLORS = ['赤红','金色','玄黑','月白','青碧','黛紫','琥珀','霜银','竹青','朱砂','靛蓝','桃粉'];
+        const LUCKY_NUMBERS = Array.from({length:36},(_,i)=>i+1);
+        const LUCKY_DO = ['纳财','会友','出行','表白','投资','签约','装修','搬家','学习','健身','创作','冥想','购物','烹饪','读书','社交','创业','旅行'];
+        const WEEK_DAYS = ['周一','周二','周三','周四','周五','周六','周日'];
+        const DIRECTIONS = ['正东','正南','正西','正北','东南','东北','西南','西北'];
+        const WEEK_KWS = ['机遇','突破','积累','转折','贵人','谨慎','行动','等待','学习','社交'];
+
+        function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+        function weightedPick(items) {
+            const total = items.reduce((s,i)=>s+i.weight,0);
+            let r = Math.random() * total;
+            for (const i of items) { r -= i.weight; if (r <= 0) return i; }
+            return items[items.length-1];
+        }
+        function baseScore(base, offset) {
+            const seed = Math.sin((base+1)*(offset+1)*9999)*0.5;
+            return Math.max(10, Math.min(100, Math.round((90-base*12)+seed*15)));
+        }
+        function makeScores(base) {
+            return [0,1,2,3].map(o => baseScore(base, o));
+        }
+        function getZodiacSuffix() {
+            const z = document.getElementById('zodiacSelect').value;
+            const c = document.getElementById('constellationSelect').value;
+            let s = '';
+            if (z) s += z + '的';
+            if (c) s += c;
+            if (!s) s = '';
+            return s;
+        }
+
+        // ====================================================================
+        //  Tab 切换
+        // ====================================================================
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+                document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+            });
+        });
+
+        // ====================================================================
+        //  【每日运势】
+        // ====================================================================
+        let dailyHistory = JSON.parse(localStorage.getItem('aiFortuneDailyHistory') || '[]');
+        let currentDaily = null;
+
+        function drawDaily() {
+            const card = document.getElementById('dailyCard');
+            if (card.classList.contains('flipped')) {
+                card.classList.remove('flipped');
+                setTimeout(() => drawDaily(), 400);
+                return;
+            }
+            document.getElementById('loadingSpinner')?.classList.add('show');
+            setTimeout(() => {
+                document.getElementById('loadingSpinner')?.classList.remove('show');
+                const lv = weightedPick(LEVELS);
+                const descs = DAILY_DESC[lv.key];
+                const desc = pick(descs);
+                const suf = getZodiacSuffix();
+                const s = makeScores(LEVELS.indexOf(lv));
+                currentDaily = { level: lv, desc: suf ? `【${suf}】` + desc : desc, scores: s,
+                    luckyNum: pick(LUCKY_NUMBERS), luckyColor: pick(LUCKY_COLORS), luckyDo: pick(LUCKY_DO) };
+                renderDaily(currentDaily);
+                card.classList.add('flipped');
+                saveDailyHistory(currentDaily);
+                if (navigator.vibrate) navigator.vibrate(15);
+            }, 500);
+        }
+
+        function renderDaily(f) {
+            const el = document.getElementById('dLevel');
+            el.textContent = f.level.key; el.className = 'fortune-level ' + f.level.class;
+            document.getElementById('dLabel').textContent = f.level.label;
+            document.getElementById('dDesc').textContent = f.desc;
+            document.getElementById('dNum').textContent = f.luckyNum;
+            document.getElementById('dColor').textContent = f.luckyColor;
+            document.getElementById('dDo').textContent = f.luckyDo;
+            const ids = [['dS1','dV1'],['dS2','dV2'],['dS3','dV3'],['dS4','dV4']];
+            ids.forEach(([b,v],i)=>{
+                setTimeout(()=>{
+                    document.getElementById(b).style.width = f.scores[i]+'%';
+                    document.getElementById(v).textContent = f.scores[i];
+                }, i*100);
+            });
+        }
+
+        function saveDailyHistory(f) {
+            const d = new Date(); const ds = (d.getMonth()+1)+'/'+d.getDate();
+            dailyHistory.unshift({ date: ds, level: f.level.key, desc: f.desc });
+            if (dailyHistory.length > 30) dailyHistory = dailyHistory.slice(0, 30);
+            localStorage.setItem('aiFortuneDailyHistory', JSON.stringify(dailyHistory));
+            renderDailyHistory();
+        }
+        function renderDailyHistory() {
+            const list = document.getElementById('historyList');
+            if (!list) return;
+            if (!dailyHistory.length) { list.innerHTML = '<span style="color:rgba(255,255,255,0.15);font-size:11px;">暂无记录</span>'; return; }
+            list.innerHTML = dailyHistory.map((h,i)=>{
+                const c = getLevelColor(h.level);
+                return `<div class="history-item" style="color:${c}" title="${h.date}: ${h.desc}" onclick="alert('📅 ${h.date}\\n运势：${h.level}\\n${h.desc}')">${h.level.charAt(0)}</div>`;
+            }).join('');
+        }
+        function getLevelColor(k) {
+            const m = {'大吉':'#ff4757','吉':'#ff6b81','中吉':'#f0a030','小吉':'#70a1ff','平':'#a4b0be','凶':'#747d8c','大凶':'#2f3542'};
+            return m[k]||'#a4b0be';
+        }
+
+        let historyOpen = false;
+        function toggleHistory() {
+            historyOpen = !historyOpen;
+            const s = document.getElementById('historySection');
+            if (s) { s.classList.toggle('show', historyOpen); if (historyOpen) renderDailyHistory(); }
+        }
+
+        function shareDaily() {
+            if (!currentDaily) { alert('先卜一卦再分享吧 🔮'); return; }
+            const f = currentDaily;
+            const text = `🔮 我的今日运势：${f.level.key}\n${f.desc}\n🍀 幸运数字：${f.luckyNum} · 幸运色：${f.luckyColor}\n✅ 宜：${f.luckyDo}\n\n来测测你的运势吧！👉`;
+            doShare(text);
+        }
+
+        // ====================================================================
+        //  【本周运势】
+        // ====================================================================
+        let currentWeekly = null;
+        function drawWeekly() {
+            const card = document.getElementById('weeklyCard');
+            if (card.classList.contains('flipped')) {
+                card.classList.remove('flipped');
+                setTimeout(() => drawWeekly(), 400);
+                return;
+            }
+            setTimeout(() => {
+                const lv = weightedPick(LEVELS);
+                const descs = WEEKLY_DESC[lv.key];
+                const desc = pick(descs);
+                const suf = getZodiacSuffix();
+                const s = makeScores(LEVELS.indexOf(lv));
+                currentWeekly = { level: lv, desc: suf ? `【${suf}】` + desc : desc, scores: s,
+                    luckyDay: pick(WEEK_DAYS), luckyColor: pick(LUCKY_COLORS), kw: pick(WEEK_KWS) };
+                renderWeekly(currentWeekly);
+                card.classList.add('flipped');
+                if (navigator.vibrate) navigator.vibrate(15);
+            }, 500);
+        }
+
+        function renderWeekly(f) {
+            const el = document.getElementById('wLevel');
+            el.textContent = f.level.key; el.className = 'fortune-level ' + f.level.class;
+            document.getElementById('wLabel').textContent = f.level.label;
+            document.getElementById('wDesc').textContent = f.desc;
+            document.getElementById('wDay').textContent = f.luckyDay;
+            document.getElementById('wColor').textContent = f.luckyColor;
+            document.getElementById('wKw').textContent = f.kw;
+            [['wS1','wV1'],['wS2','wV2'],['wS3','wV3'],['wS4','wV4']].forEach(([b,v],i)=>{
+                setTimeout(()=>{
+                    document.getElementById(b).style.width = f.scores[i]+'%';
+                    document.getElementById(v).textContent = f.scores[i];
+                }, i*100);
+            });
+            // 本周建议
+            const tips = generateWeeklyTips(f);
+            document.getElementById('wt1').textContent = tips[0];
+            const t2 = document.getElementById('wt2');
+            const t3 = document.getElementById('wt3');
+            if (t2) t2.textContent = tips[1];
+            if (t3) t3.textContent = tips[2];
+        }
+
+        function generateWeeklyTips(f) {
+            const base = LEVELS.indexOf(f.level);
+            const tips = [];
+            if (base <= 1) {
+                tips.push('本周能量充沛，适合主动出击，大胆推进重要事项');
+                tips.push('贵人运强，多参加社交活动会有意外收获');
+                tips.push('注意不要因为顺遂而疏忽细节，保持谨慎');
+            } else if (base <= 3) {
+                tips.push('本周稳中求进，做好手头的事就是最好的突破');
+                tips.push('适合整理和复盘，把之前的经验转化为下一步的行动计划');
+                tips.push('注意劳逸结合，别把自己逼得太紧');
+            } else if (base <= 5) {
+                tips.push('本周宜静不宜动，重要决策建议放在下周');
+                tips.push('注意人际关系，少说话多观察');
+                tips.push('适当运动和休息，好的身体状态能帮你度过难关');
+            } else {
+                tips.push('本周务必低调，避免与人发生正面冲突');
+                tips.push('不适合做任何重大决定，先求稳再求进');
+                tips.push('黑暗总会过去，保持耐心和信心');
+            }
+            return tips;
+        }
+
+        function shareWeekly() {
+            if (!currentWeekly) { alert('先测本周运势再分享吧 📆'); return; }
+            const f = currentWeekly;
+            const text = `📆 我的本周运势：${f.level.key}\n${f.desc}\n🍀 幸运日：${f.luckyDay} · 幸运色：${f.luckyColor}\n🔑 关键词：${f.kw}\n\n来测测你的本周运势！👉`;
+            doShare(text);
+        }
+
+        // ====================================================================
+        //  【本月运势】
+        // ====================================================================
+        let currentMonthly = null;
+        function drawMonthly() {
+            const card = document.getElementById('monthlyCard');
+            if (card.classList.contains('flipped')) {
+                card.classList.remove('flipped');
+                setTimeout(() => drawMonthly(), 400);
+                return;
+            }
+            setTimeout(() => {
+                const lv = weightedPick(LEVELS);
+                const descs = MONTHLY_DESC[lv.key];
+                const desc = pick(descs);
+                const suf = getZodiacSuffix();
+                const s = makeScores(LEVELS.indexOf(lv));
+                currentMonthly = { level: lv, desc: suf ? `【${suf}】` + desc : desc, scores: s,
+                    dir: pick(DIRECTIONS), num: pick(LUCKY_NUMBERS), doThing: pick(LUCKY_DO) };
+                renderMonthly(currentMonthly);
+                card.classList.add('flipped');
+                if (navigator.vibrate) navigator.vibrate(15);
+            }, 500);
+        }
+
+        function renderMonthly(f) {
+            const el = document.getElementById('mLevel');
+            el.textContent = f.level.key; el.className = 'fortune-level ' + f.level.class;
+            document.getElementById('mLabel').textContent = f.level.label;
+            document.getElementById('mDesc').textContent = f.desc;
+            document.getElementById('mDir').textContent = f.dir;
+            document.getElementById('mNum').textContent = f.num;
+            document.getElementById('mDo').textContent = f.doThing;
+            [['mS1','mV1'],['mS2','mV2'],['mS3','mV3'],['mS4','mV4']].forEach(([b,v],i)=>{
+                setTimeout(()=>{
+                    document.getElementById(b).style.width = f.scores[i]+'%';
+                    document.getElementById(v).textContent = f.scores[i];
+                }, i*100);
+            });
+            const tips = generateMonthlyTips(f);
+            document.getElementById('mt1').textContent = tips[0];
+            const t2 = document.getElementById('mt2');
+            const t3 = document.getElementById('mt3');
+            if (t2) t2.textContent = tips[1];
+            if (t3) t3.textContent = tips[2];
+        }
+
+        function generateMonthlyTips(f) {
+            const base = LEVELS.indexOf(f.level);
+            if (base <= 1) return ['本月是发展的好时机，大胆去追求目标','适合开启新项目或学习新技能','财运旺盛，可以适当做理财规划'];
+            if (base <= 3) return ['本月稳扎稳打，积累比冒进更重要','月中左右会有小机遇，留意把握','注意不要因为平稳而松懈'];
+            if (base <= 5) return ['本月需保守行事，重大决定延后','注意财务安全和身体健康','低调行事，静待时运转变'];
+            return ['本月诸事不宜冒进，守住底线最重要','避免与人争执，忍一时风平浪静','坚持住，下个月运势会好转'];
+        }
+
+        function shareMonthly() {
+            if (!currentMonthly) { alert('先测本月运势再分享吧 🗓️'); return; }
+            const f = currentMonthly;
+            const text = `🗓️ 我的本月运势：${f.level.key}\n${f.desc}\n🧭 贵人方位：${f.dir} · 吉数：${f.num}\n✅ 宜：${f.doThing}\n\n来测测你的本月运势！👉`;
+            doShare(text);
+        }
+
+        // ====================================================================
+        //  分享工具
+        // ====================================================================
+        function doShare(text) {
+            if (navigator.share) { navigator.share({ title: 'AI 灵境占卜', text }).catch(()=>{}); }
+            else if (navigator.clipboard) { navigator.clipboard.writeText(text).then(()=>alert('📋 已复制，快去分享吧！')).catch(()=>prompt('复制分享：',text)); }
+            else { prompt('复制分享：', text); }
+        }
+
+        // ====================================================================
+        //  【塔罗占卜】
+        // ====================================================================
+        const TAROT_CARDS = [
+            { icon: '🃏', name: '愚者', meaning: '新的开始，冒险，天真。放下包袱，勇敢迈出第一步。', reverse: '鲁莽，冲动。需要三思而后行。' },
+            { icon: '🎭', name: '魔术师', meaning: '创造力，自信，技能。你拥有一切所需，善用你的才华。', reverse: '浪费天赋，缺乏计划。需要更专注。' },
+            { icon: '🌙', name: '女祭司', meaning: '直觉，内在智慧。答案在你心中，静下来倾听。', reverse: '忽视直觉，表面化。需要深入思考。' },
+            { icon: '🌱', name: '女皇', meaning: '丰收，滋养，自然。好日子即将到来，享受当下。', reverse: '依赖他人，创造力受阻。需要独立。' },
+            { icon: '👑', name: '皇帝', meaning: '权威，稳定，领导力。建立秩序，承担责任。', reverse: '固执，滥用权力。需要灵活变通。' },
+            { icon: '📜', name: '教皇', meaning: '传统，信仰，指引。寻求智者的建议。', reverse: '过于保守，叛逆。需要打破常规。' },
+            { icon: '💕', name: '恋人', meaning: '爱情，选择，和谐。跟随内心，做真实的自己。', reverse: '分裂，犹豫不决。需要明确方向。' },
+            { icon: '🏆', name: '战车', meaning: '胜利，决心，意志力。勇往直前，克服障碍。', reverse: '缺乏方向，失控。需要重新定位。' },
+            { icon: '⚖️', name: '正义', meaning: '公平，真相，因果。种什么因，得什么果。', reverse: '不公，逃避责任。勇敢面对真相。' },
+            { icon: '🧘', name: '隐士', meaning: '内省，智慧，独处。寻找内在的光明。', reverse: '孤独，退缩。需要适时求助。' },
+            { icon: '🎡', name: '命运之轮', meaning: '转变，轮回，机遇。命运正在转动，顺势而为。', reverse: '厄运，抗拒变化。接受生命的起伏。' },
+            { icon: '💪', name: '力量', meaning: '勇气，内在力量，耐心。温柔中蕴含强大的力量。', reverse: '软弱，失去信心。相信自己。' },
+            { icon: '🌌', name: '倒吊人', meaning: '牺牲，新的视角。换一个角度看问题。', reverse: '拖延，抗拒。需要果断行动。' },
+            { icon: '☠️', name: '死神', meaning: '结束，新生。旧的不去，新的不来。', reverse: '抗拒改变，停滞不前。学会放手。' },
+            { icon: '🎯', name: '节制', meaning: '平衡，适度，和谐。找到中庸之道。', reverse: '极端，失衡。需要调整节奏。' },
+            { icon: '👹', name: '恶魔', meaning: '束缚，执念，欲望。你被什么困住了？', reverse: '觉醒，摆脱束缚。重获自由。' },
+            { icon: '💥', name: '高塔', meaning: '剧变，崩塌。推倒旧有的，才能建新的。', reverse: '避免灾难，转机。及时止损。' },
+            { icon: '⭐', name: '星星', meaning: '希望，灵感，平静。风雨过后，必有彩虹。', reverse: '失望，失去方向。重拾信心。' },
+            { icon: '🌙🌙', name: '月亮', meaning: '幻觉，恐惧，潜意识。真相并非表面所见。', reverse: '焦虑被化解，看清真相。' },
+            { icon: '☀️', name: '太阳', meaning: '喜悦，成功，活力。一切都充满光明！', reverse: '暂时的阴霾，但很快就会过去。' },
+            { icon: '🎤', name: '审判', meaning: '觉醒，重生，自我评估。听从内心的召唤。', reverse: '自我怀疑，拒绝改变。' },
+            { icon: '🌍', name: '世界', meaning: '完成，圆满，旅程的终点。恭喜，你做到了！', reverse: '未完成，急刹车。还需要一点耐心。' },
+        ];
+
+        let selectedTarot = [];
+
+        function initTarot() {
+            const grid = document.getElementById('tarotGrid');
+            grid.innerHTML = '';
+            TAROT_CARDS.forEach((card, i) => {
+                const div = document.createElement('div');
+                div.className = 'tarot-card';
+                div.dataset.index = i;
+                div.innerHTML = `<div class="card-icon">${card.icon}</div><div class="card-name">${card.name}</div>`;
+                div.addEventListener('click', () => toggleTarotSelect(i, div));
+                grid.appendChild(div);
+            });
+        }
+
+        function toggleTarotSelect(idx, el) {
+            if (selectedTarot.includes(idx)) {
+                selectedTarot = selectedTarot.filter(i => i !== idx);
+                el.classList.remove('selected');
+            } else {
+                if (selectedTarot.length >= 3) {
+                    alert('最多选 3 张牌 ✋');
+                    return;
+                }
+                selectedTarot.push(idx);
+                el.classList.add('selected');
+            }
+            if (selectedTarot.length === 3) showTarotReading();
+            else document.getElementById('tarotReading').classList.remove('show');
+        }
+
+        function drawTarot() {
+            const all = document.querySelectorAll('.tarot-card');
+            all.forEach(el => el.classList.remove('selected'));
+            const indices = Array.from({length: TAROT_CARDS.length}, (_, i) => i);
+            // Fisher-Yates shuffle
+            for (let i = indices.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [indices[i], indices[j]] = [indices[j], indices[i]];
+            }
+            selectedTarot = indices.slice(0, 3);
+            selectedTarot.forEach(idx => {
+                all[idx].classList.add('selected');
+            });
+            showTarotReading();
+            if (navigator.vibrate) navigator.vibrate(20);
+        }
+
+        function showTarotReading() {
+            const container = document.getElementById('tarotResult');
+            const reading = document.getElementById('tarotReading');
+            let html = '';
+            selectedTarot.forEach((idx, pos) => {
+                const card = TAROT_CARDS[idx];
+                const isReversed = Math.random() < 0.3;
+                const posNames = ['过去', '现在', '未来'];
+                html += `<div class="reading-item">
+                    <div class="ri-name">${card.icon} ${card.name}（${posNames[pos]}）</div>
+                    <div class="ri-pos">${isReversed ? '🔻 逆位' : '🔺 正位'}</div>
+                    <div class="ri-meaning">${isReversed ? card.reverse : card.meaning}</div>
+                </div>`;
+            });
+            container.innerHTML = html;
+            reading.classList.add('show');
+        }
+
+        function clearTarot() {
+            selectedTarot = [];
+            document.querySelectorAll('.tarot-card').forEach(el => el.classList.remove('selected'));
+            document.getElementById('tarotReading').classList.remove('show');
+        }
+
+        // ====================================================================
+        //  【解梦】
+        // ====================================================================
+        const DREAM_KEYWORDS = {
+            '飞': { symbol: '🕊️ 飞翔', meaning: '渴望自由、想要摆脱现实的束缚。说明你有追求和理想，内心充满向上的力量。' },
+            '掉': { symbol: '📉 坠落', meaning: '可能近期有焦虑或失控感。提醒你要放慢脚步，找回安全感。' },
+            '水': { symbol: '🌊 水', meaning: '象征情绪和潜意识。清澈的水代表心境平和，浑浊的水代表内心有困扰。' },
+            '海': { symbol: '🌊 大海', meaning: '广阔的潜意识世界。平静的海面代表内心安宁，波涛汹涌代表情绪波动。' },
+            '火': { symbol: '🔥 火', meaning: '代表能量、激情或愤怒。小火是热情，大火可能暗示压力过大。' },
+            '追': { symbol: '🏃 被追赶', meaning: '可能在逃避某个问题或压力。建议正视让你害怕的事情。' },
+            '蛇': { symbol: '🐍 蛇', meaning: '代表智慧、转变或潜在的威胁。也可能是某种直觉的提醒。' },
+            '猫': { symbol: '🐱 猫', meaning: '代表独立、神秘和女性力量。暗示你需要更多的自主空间。' },
+            '狗': { symbol: '🐕 狗', meaning: '代表忠诚、友情和保护。可能是你对某段关系的渴望。' },
+            '死': { symbol: '💀 死亡', meaning: '在梦境中通常不代表真实的死亡，而是象征结束与新生的转换。' },
+            '考试': { symbol: '📝 考试', meaning: '代表生活中的压力或自我评估。说明你正在面临某种考验。' },
+            '学校': { symbol: '🏫 学校', meaning: '象征学习和成长。可能是你在回顾过去的某个阶段。' },
+            '家': { symbol: '🏠 家', meaning: '代表安全感、归属感或家庭关系。梦到家可能是在寻找内心的安定。' },
+            '雨': { symbol: '🌧️ 雨', meaning: '代表情绪的宣泄或净化。雨后总会天晴。' },
+            '雷电': { symbol: '⚡ 雷电', meaning: '代表突然的觉醒或震撼。可能有什么事情让你恍然大悟。' },
+            '桥': { symbol: '🌉 桥', meaning: '象征过渡和连接。你可能正在经历人生的某个转折点。' },
+            '路': { symbol: '🛤️ 路', meaning: '代表人生方向。平坦的路说明顺遂，坎坷的路说明有挑战。' },
+            '花': { symbol: '🌸 花', meaning: '代表美好、美丽和收获。近期可能有好事发生。' },
+            '血': { symbol: '🩸 血', meaning: '代表生命力或损失。需要关注自己的能量和健康状态。' },
+            '小孩': { symbol: '👶 小孩', meaning: '代表纯真、新的开始或内在的需要被照顾的部分。' },
+        };
+
+        function interpretDream() {
+            const input = document.getElementById('dreamInput').value.trim();
+            if (!input) { alert('请输入你的梦境 🌙'); return; }
+
+            const foundSymbols = [];
+            for (const [word, data] of Object.entries(DREAM_KEYWORDS)) {
+                if (input.includes(word)) {
+                    foundSymbols.push({ word, ...data });
+                }
+            }
+
+            const result = document.getElementById('dreamResult');
+            const content = document.getElementById('dreamContent');
+            const symbols = document.getElementById('dreamSymbols');
+
+            let interpretation = '';
+            if (foundSymbols.length === 0) {
+                interpretation = '你的梦境充满了神秘的色彩。虽然暂时没有找到典型的梦境符号，但这说明这个梦是你独特的内心世界的反映。建议你回想一下最近的心事，或许能找到答案。';
+            } else {
+                interpretation = '你的梦境中出现了以下重要符号：\n\n';
+                foundSymbols.forEach(s => {
+                    interpretation += `${s.symbol}：${s.meaning}\n\n`;
+                });
+                interpretation += '梦境是潜意识的来信。试着问自己：最近的生活中，有什么事情让你产生了这些感受？';
+            }
+
+            content.textContent = interpretation;
+
+            if (foundSymbols.length > 0) {
+                symbols.innerHTML = foundSymbols.map(s =>
+                    `<span class="sym-tag">${s.symbol}</span>`
+                ).join('');
+            } else {
+                symbols.innerHTML = '';
+            }
+
+            result.classList.add('show');
+            if (navigator.vibrate) navigator.vibrate(15);
+        }
+
+        function clearDream() {
+            document.getElementById('dreamInput').value = '';
+            document.getElementById('dreamResult').classList.remove('show');
+        }
+
+        // ====================================================================
+        //  星空 + 花瓣
+        // ====================================================================
+        function createStars() {
+            const c = document.getElementById('stars');
+            const colors = ['white', 'pink', 'white', 'gold', 'white', 'pink'];
+            for (let i = 0; i < 100; i++) {
+                const s = document.createElement('div');
+                s.className = 'star ' + colors[i % colors.length];
+                const sz = Math.random() * 2.4 + 0.6;
+                s.style.width = sz + 'px'; s.style.height = sz + 'px';
+                s.style.left = Math.random() * 100 + '%';
+                s.style.top = Math.random() * 100 + '%';
+                s.style.setProperty('--dur', (Math.random() * 3 + 2) + 's');
+                s.style.animationDelay = Math.random() * 6 + 's';
+                c.appendChild(s);
+            }
+        }
+        createStars();
+
+        // 飘落花瓣
+        function createPetals() {
+            const emojis = ['🌸', '✨', '🩷', '🌷', '💗', '🪷'];
+            for (let i = 0; i < 8; i++) {
+                const p = document.createElement('div');
+                p.className = 'petal';
+                p.textContent = emojis[i % emojis.length];
+                p.style.left = Math.random() * 100 + '%';
+                p.style.fontSize = (Math.random() * 8 + 12) + 'px';
+                p.style.setProperty('--fall-dur', (Math.random() * 8 + 10) + 's');
+                p.style.setProperty('--fall-delay', (Math.random() * 15) + 's');
+                document.body.appendChild(p);
+            }
+        }
+        createPetals();
+
+        // ====================================================================
+        //  键盘快捷键
+        // ====================================================================
+        document.addEventListener('keydown', (e) => {
+            if (e.key === ' ' || e.key === 'Enter') {
+                const active = document.querySelector('.tab-content.active');
+                if (!active) return;
+                if (active.id === 'tab-daily') { e.preventDefault(); drawDaily(); }
+                else if (active.id === 'tab-weekly') { e.preventDefault(); drawWeekly(); }
+                else if (active.id === 'tab-monthly') { e.preventDefault(); drawMonthly(); }
+                else if (active.id === 'tab-tarot') { e.preventDefault(); drawTarot(); }
+                else if (active.id === 'tab-dream') { e.preventDefault(); interpretDream(); }
+            }
+        });
+
+        // ====================================================================
+        //  初始化
+        // ====================================================================
+        initTarot();
+        renderDailyHistory();
+        // 预填充本周建议
+        const defaultTips = generateWeeklyTips(weightedPick(LEVELS));
+        document.getElementById('wt1').textContent = defaultTips[0];
+        const wt2 = document.getElementById('wt2');
+        const wt3 = document.getElementById('wt3');
+        if (wt2) wt2.textContent = defaultTips[1];
+        if (wt3) wt3.textContent = defaultTips[2];
+
+        console.log('✨ AI 灵境占卜馆已加载');
+        console.log('💡 Tab切换 | 空格键快速占卜');
+
+        // ====================================================================
+        //  不蒜子访问统计
+        // ====================================================================
+        (function() {
+            var c = document.createElement('script');
+            c.src = '//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js';
+            c.async = true;
+            document.head.appendChild(c);
+        })();
+    </script>
+</body>
+</html>
+
+        console.log('✨ AI 今日运势已加载');
+        console.log('💡 按 空格键 或 Enter 快速卜卦');
+    </script>
+</body>
+</html>
