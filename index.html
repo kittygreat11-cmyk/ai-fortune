@@ -42,9 +42,9 @@ body.rtl{direction:rtl;font-family:-apple-system,'Noto Sans Arabic','Helvetica N
 
 /* Tai Chi - Ink Style */
 .taiji-wrap{position:relative;width:300px;height:300px;display:flex;align-items:center;justify-content:center;transition:transform .9s cubic-bezier(.77,0,.18,1),opacity .8s ease;perspective:600px}
-.taiji-inner{width:260px;height:260px;position:relative;border-radius:50%;display:flex;overflow:hidden;box-shadow:0 0 60px rgba(201,169,110,.04),0 0 120px rgba(201,169,110,.02);transform-style:preserve-3d;transition:transform .6s ease}
+.taiji-inner{width:260px;height:260px;position:relative;border-radius:50%;display:flex;box-shadow:0 0 60px rgba(201,169,110,.04),0 0 120px rgba(201,169,110,.02);transform-style:preserve-3d;transition:transform .6s ease}
 .tj-half{width:130px;height:260px;position:relative;overflow:hidden;transition:transform .9s cubic-bezier(.77,0,.18,1),opacity .7s ease}
-.tj-half.left{background:linear-gradient(135deg,rgba(200,175,140,.5),rgba(170,150,120,.45));border-radius:130px 0 0 130px}
+.tj-half.left{background:linear-gradient(135deg,rgba(200,175,140,.5),rgba(170,150,120,.45));border-radius:130px 0 0 130px;width:131px;z-index:1}
 .tj-half.right{background:linear-gradient(135deg,rgba(40,45,50,.6),rgba(30,35,40,.55));border-radius:0 130px 130px 0}
 .tj-half.left::after{content:'';position:absolute;right:-65px;top:0;width:130px;height:130px;background:linear-gradient(135deg,rgba(40,45,50,.6),rgba(30,35,40,.55));border-radius:50%}
 .tj-half.right::after{content:'';position:absolute;left:-65px;top:130px;width:130px;height:130px;background:linear-gradient(135deg,rgba(200,175,140,.5),rgba(170,150,120,.45));border-radius:50%}
@@ -294,7 +294,7 @@ body.rtl .cultural-section{text-align:right}
   .taiji-wrap{width:200px;height:200px}
   .taiji-inner{width:180px;height:180px}
   .tj-half{width:90px;height:180px}
-  .tj-half.left{border-radius:90px 0 0 90px}
+  .tj-half.left{width:91px;border-radius:90px 0 0 90px;z-index:1}
   .tj-half.right{border-radius:0 90px 90px 0}
   .tj-half.left::after{right:-45px;width:90px;height:90px}
   .tj-half.right::after{left:-45px;width:90px;height:90px;top:90px}
