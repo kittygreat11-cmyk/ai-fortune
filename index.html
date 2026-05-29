@@ -41,9 +41,9 @@ body.rtl{direction:rtl;font-family:-apple-system,'Noto Sans Arabic','Helvetica N
 .splash.hidden{display:none}
 
 /* Tai Chi - Ink Style */
-.taiji-wrap{position:relative;width:300px;height:300px;display:flex;align-items:center;justify-content:center;transition:transform .6s cubic-bezier(.77,0,.18,1),opacity .6s ease}
-.taiji-inner{width:260px;height:260px;position:relative;border-radius:50%;display:flex;overflow:hidden;box-shadow:0 0 60px rgba(201,169,110,.04),0 0 120px rgba(201,169,110,.02)}
-.tj-half{width:130px;height:260px;position:relative;overflow:hidden;transition:transform .9s cubic-bezier(.77,0,.18,1)}
+.taiji-wrap{position:relative;width:300px;height:300px;display:flex;align-items:center;justify-content:center;transition:transform .9s cubic-bezier(.77,0,.18,1),opacity .8s ease;perspective:600px}
+.taiji-inner{width:260px;height:260px;position:relative;border-radius:50%;display:flex;overflow:hidden;box-shadow:0 0 60px rgba(201,169,110,.04),0 0 120px rgba(201,169,110,.02);transform-style:preserve-3d;transition:transform .6s ease}
+.tj-half{width:130px;height:260px;position:relative;overflow:hidden;transition:transform .9s cubic-bezier(.77,0,.18,1),opacity .7s ease}
 .tj-half.left{background:linear-gradient(135deg,rgba(200,175,140,.5),rgba(170,150,120,.45));border-radius:130px 0 0 130px}
 .tj-half.right{background:linear-gradient(135deg,rgba(40,45,50,.6),rgba(30,35,40,.55));border-radius:0 130px 130px 0}
 .tj-half.left::after{content:'';position:absolute;right:-65px;top:0;width:130px;height:130px;background:linear-gradient(135deg,rgba(40,45,50,.6),rgba(30,35,40,.55));border-radius:50%}
@@ -53,9 +53,26 @@ body.rtl{direction:rtl;font-family:-apple-system,'Noto Sans Arabic','Helvetica N
 .tj-dot.r{background:linear-gradient(135deg,rgba(200,175,140,.5),rgba(170,150,120,.45));bottom:46px;left:22px}
 .tj-ring{position:absolute;width:268px;height:268px;border-radius:50%;border:1px solid rgba(201,169,110,.08);pointer-events:none}
 .tj-ring-2{position:absolute;width:276px;height:276px;border-radius:50%;border:1px solid rgba(201,169,110,.04);pointer-events:none}
-.taiji-wrap.split .tj-half.left{transform:translateX(-200px)}
-.taiji-wrap.split .tj-half.right{transform:translateX(200px)}
-.taiji-wrap.split{opacity:0}
+.taiji-wrap.split{animation:sCurveOpen 1.2s cubic-bezier(.77,0,.18,1) forwards}
+.taiji-wrap.split .taiji-inner{overflow:visible}
+.taiji-wrap.split .tj-half.left{transform-origin:right center;animation:halfSwingL 1.2s cubic-bezier(.65,0,.25,1) forwards}
+.taiji-wrap.split .tj-half.right{transform-origin:left center;animation:halfSwingR 1.2s cubic-bezier(.65,0,.25,1) forwards}
+@keyframes sCurveOpen{
+  0%{transform:scale(1) rotate(0deg);opacity:1}
+  30%{transform:scale(1.3) rotate(60deg);opacity:1}
+  70%{transform:scale(2.5) rotate(300deg);opacity:.6}
+  100%{transform:scale(4) rotate(540deg);opacity:0}
+}
+@keyframes halfSwingL{
+  0%{transform:rotateY(0deg);opacity:1}
+  40%{transform:rotateY(15deg);opacity:1}
+  100%{transform:rotateY(85deg);opacity:0}
+}
+@keyframes halfSwingR{
+  0%{transform:rotateY(0deg);opacity:1}
+  40%{transform:rotateY(-15deg);opacity:1}
+  100%{transform:rotateY(-85deg);opacity:0}
+}
 .taiji-glow{position:absolute;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(201,169,110,.03),transparent 60%);pointer-events:none;animation:tgPulse 4s ease-in-out infinite}
 @keyframes tgPulse{0%,100%{transform:scale(1);opacity:.4}50%{transform:scale(1.2);opacity:.9}}
 
@@ -207,6 +224,24 @@ body.rtl .daily-energy{text-align:right}
 
 .footer-actions{display:flex;gap:12px;justify-content:center;margin:30px 0 20px;flex-wrap:wrap}
 .footer{margin-top:20px;color:rgba(201,169,110,.08);font-size:10px;letter-spacing:2px}
+
+/* ========== Cultural Notes Panel ========== */
+.cultural-panel{margin:30px 0 16px;border:1px solid rgba(201,169,110,.06);border-radius:14px;overflow:hidden}
+.cultural-toggle{width:100%;padding:14px 20px;background:rgba(201,169,110,.02);border:none;color:rgba(201,169,110,.35);font-size:12px;letter-spacing:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:all .3s;text-align:center}
+.cultural-toggle:hover{background:rgba(201,169,110,.05);color:rgba(201,169,110,.55)}
+.cultural-toggle .toggle-arrow{font-size:10px;transition:transform .3s;display:inline-block}
+.cultural-toggle.open .toggle-arrow{transform:rotate(180deg)}
+.cultural-body{max-height:0;overflow:hidden;transition:max-height .5s cubic-bezier(.4,0,.2,1),padding .4s ease}
+.cultural-body.open{max-height:2000px;padding:0 20px 20px}
+.cultural-section{margin:20px 0;text-align:left;border-bottom:1px solid rgba(201,169,110,.04);padding-bottom:16px}
+.cultural-section:last-child{border-bottom:none;padding-bottom:0}
+body.rtl .cultural-section{text-align:right}
+.cultural-section .cs-icon{font-size:22px;margin-bottom:4px}
+.cultural-section .cs-title{font-size:13px;color:rgba(201,169,110,.6);letter-spacing:3px;margin-bottom:8px;font-weight:400}
+.cultural-section .cs-content{font-size:12px;color:rgba(232,224,213,.35);line-height:1.8;letter-spacing:.5px}
+.cultural-section .cs-content .wu-diagram{display:flex;justify-content:center;gap:12px;margin:10px 0;flex-wrap:wrap}
+.cultural-section .cs-content .wu-node{padding:6px 14px;border-radius:12px;border:1px solid rgba(201,169,110,.08);font-size:11px;color:rgba(232,224,213,.4);letter-spacing:1px;display:flex;align-items:center;gap:5px}
+.cultural-section .cs-content .cs-highlight{color:rgba(201,169,110,.5)}
 
 /* Modal - scroll style */
 .modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(5,8,10,.75);backdrop-filter:blur(12px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
@@ -367,6 +402,15 @@ body.rtl .daily-energy{text-align:right}
     <div class="step-panel" id="step4"><div id="resultContent"></div></div>
   </div>
   <div class="footer" id="footerText">QiCode · 道法自然 · Modern You</div>
+  <!-- Cultural Notes Panel -->
+  <div class="cultural-panel" id="culturalPanel">
+    <button class="cultural-toggle" id="culturalToggle" onclick="toggleCultural()"><span id="culturalToggleLabel">📜 Discover Eastern Wisdom</span><span class="toggle-arrow">▾</span></button>
+    <div class="cultural-body" id="culturalBody">
+      <div class="cultural-section"><div class="cs-icon">☯</div><div class="cs-title" id="csTitle1">Yi Jing · I Ching</div><div class="cs-content" id="csContent1">The I Ching (Book of Changes) is rooted in <span class="cs-highlight">Tao</span> and the <span class="cs-highlight">Yin-Yang</span> philosophy. Its core message: <span class="cs-highlight">the only constant is change</span>. All things transform fluidly—like water finding its path. 🌊</div></div>
+      <div class="cultural-section"><div class="cs-icon">⬡</div><div class="cs-title" id="csTitle2">Wu Xing · Five Elements</div><div class="cs-content" id="csContent2">The <span class="cs-highlight">Five Elements</span> describe how energy flows and transforms within you. Each has a unique nature and rhythm:<div class="wu-diagram" id="wuDiagram"><span class="wu-node">🌳 Wood → Grow</span><span class="wu-node">🔥 Fire → Shine</span><span class="wu-node">⛰️ Earth → Ground</span><span class="wu-node">⚔️ Metal → Refine</span><span class="wu-node">🌊 Water → Flow</span></div><br>They create (<span class="cs-highlight">生</span>) and control (<span class="cs-highlight">克</span>) each other: Wood→Fire→Earth→Metal→Water→Wood. Harmony is when all five dance together. 🌀</div></div>
+      <div class="cultural-section"><div class="cs-icon">🧘</div><div class="cs-title" id="csTitle3">East Meets You</div><div class="cs-content" id="csContent3">The 12 <span class="cs-highlight">Chinese zodiac animals</span> each carry an elemental essence. Combined with your zodiac sign and personality, <span class="cs-highlight">QiCode</span> maps your unique energy fingerprint. Modern intention meets timeless wisdom—your personal <span class="cs-highlight">Dao</span> of living. 🍃</div></div>
+    </div>
+  </div>
 </div>
 
 <!-- Modal -->
@@ -534,7 +578,7 @@ function buildLangBar(){
     var b=document.createElement('button');
     b.className='lang-btn'+(l.k===currentLang?' active':'');
     b.textContent=l.flag+' '+l.name;
-    b.onclick=function(){currentLang=l.k;localStorage.setItem('qicode_lang',l.k);document.body.classList.toggle('rtl',l.k==='ar');document.querySelectorAll('.lang-btn').forEach(function(x){x.classList.toggle('active',x.textContent.includes(l.name));});initBirthPicker();if(document.querySelector('#step2.active')){renderQ();}};
+    b.onclick=function(){currentLang=l.k;localStorage.setItem('qicode_lang',l.k);document.body.classList.toggle('rtl',l.k==='ar');document.querySelectorAll('.lang-btn').forEach(function(x){x.classList.toggle('active',x.textContent.includes(l.name));});initBirthPicker();refreshCultural();if(document.querySelector('#step2.active')){renderQ();}};
     bar.appendChild(b);
   });
 }
@@ -669,6 +713,95 @@ var DAILY_LANG={
 };
 
 function tdaily(i,f){return DAILY_LANG[currentLang]?.[f]?.[i]||DAILY_LANG.en[f]?.[i]||'';}
+
+/* ========== Cultural Notes Data (8 languages) ========== */
+var CULTURAL_LANG={
+  en:{
+    toggle:'📜 Discover Eastern Wisdom',
+    t1:'Yi Jing · I Ching',
+    t2:'Wu Xing · Five Elements',
+    t3:'East Meets You',
+    c1:'The <span class="cs-highlight">I Ching</span> (Book of Changes) is one of the oldest Chinese classics. It is rooted in the philosophy of <span class="cs-highlight">Tao</span> (the Way) and the interplay of <span class="cs-highlight">Yin</span> and <span class="cs-highlight">Yang</span>. Its core teaching: <span class="cs-highlight">the only constant is change</span>. The 64 hexagrams represent life\'s fluid patterns—reminding us that all things transform like water finding its path. 🌊',
+    c2:'The <span class="cs-highlight">Five Elements</span> (Wu Xing) describe how energy flows and transforms within you and the universe. Each element has its own nature and rhythm:<div class="wu-diagram" id="wuDiagram"><span class="wu-node">🌳 Wood → Grow</span><span class="wu-node">🔥 Fire → Shine</span><span class="wu-node">⛰️ Earth → Ground</span><span class="wu-node">⚔️ Metal → Refine</span><span class="wu-node">🌊 Water → Flow</span></div><br>They create (<span class="cs-highlight">生 Sheng</span>) and control (<span class="cs-highlight">克 Ke</span>) each other: Wood→Fire→Earth→Metal→Water→Wood. True harmony is when all five dance together within you. 🌀',
+    c3:'The 12 <span class="cs-highlight">Chinese zodiac animals</span> each carry an innate elemental essence. Combined with your Western zodiac sign and your personality quiz responses, <span class="cs-highlight">QiCode</span> maps your unique energy fingerprint—a bridge between ancient wisdom and modern self-discovery. This is your personal <span class="cs-highlight">Dao</span> (道) of living. 🍃'
+  },
+  zhCN:{
+    toggle:'📜 探索东方智慧',
+    t1:'易经 · I Ching',
+    t2:'五行 · Wu Xing',
+    t3:'东方智慧与现代自我',
+    c1:'<span class="cs-highlight">《易经》</span>是中国最古老的经典之一，根植于<span class="cs-highlight">道</span>与<span class="cs-highlight">阴阳</span>哲学。其核心思想：<span class="cs-highlight">唯一不变的是变化本身</span>。六十四卦象描绘了生命的流动模式——提醒我们万物如水般流转。🌊',
+    c2:'<span class="cs-highlight">五行</span>描述了能量在你和宇宙中的流动与转化。每种元素有其独特的性质和节奏：<div class="wu-diagram" id="wuDiagram"><span class="wu-node">🌳 木 → 生发</span><span class="wu-node">🔥 火 → 闪耀</span><span class="wu-node">⛰️ 土 → 承载</span><span class="wu-node">⚔️ 金 → 收敛</span><span class="wu-node">🌊 水 → 流动</span></div><br>五行<span class="cs-highlight">相生</span>（木→火→土→金→水→木）与<span class="cs-highlight">相克</span>（木→土→水→火→金→木），真正的和谐是五行在你体内共舞。🌀',
+    c3:'12<span class="cs-highlight">生肖</span>各含先天元素属性。结合你的西方星座和性格问卷，<span class="cs-highlight">QiCode</span>绘出你独特的能量图谱——在古老智慧与现代自我认知之间架起一座桥梁。这就是你个人的<span class="cs-highlight">道</span>。🍃'
+  },
+  zhTW:{
+    toggle:'📜 探索東方智慧',
+    t1:'易經 · I Ching',
+    t2:'五行 · Wu Xing',
+    t3:'東方智慧與現代自我',
+    c1:'<span class="cs-highlight">《易經》</span>是中國最古老的經典之一，根源於<span class="cs-highlight">道</span>與<span class="cs-highlight">陰陽</span>哲學。其核心思想：<span class="cs-highlight">唯一不變的是變化本身</span>。六十四卦象描繪了生命的流動模式——提醒我們萬物如水般流轉。🌊',
+    c2:'<span class="cs-highlight">五行</span>描述了能量在你和宇宙中的流動與轉化。每種元素有其獨特的性質和節奏：<div class="wu-diagram" id="wuDiagram"><span class="wu-node">🌳 木 → 生發</span><span class="wu-node">🔥 火 → 閃耀</span><span class="wu-node">⛰️ 土 → 承載</span><span class="wu-node">⚔️ 金 → 收斂</span><span class="wu-node">🌊 水 → 流動</span></div><br>五行<span class="cs-highlight">相生</span>（木→火→土→金→水→木）與<span class="cs-highlight">相剋</span>（木→土→水→火→金→木），真正的和諧是五行在你體內共舞。🌀',
+    c3:'12<span class="cs-highlight">生肖</span>各含先天元素屬性。結合你的西方星座和性格問卷，<span class="cs-highlight">QiCode</span>繪出你獨特的能量圖譜——在古老智慧與現代自我認知之間架起一座橋樑。這就是你個人的<span class="cs-highlight">道</span>。🍃'
+  },
+  ja:{
+    toggle:'📜 東洋の知恵を探る',
+    t1:'易経 · I Ching',
+    t2:'五行 · Wu Xing',
+    t3:'東洋と現代の自分',
+    c1:'<span class="cs-highlight">『易経』</span>は中国最古の古典の一つで、<span class="cs-highlight">道</span>（タオ）と<span class="cs-highlight">陰陽</span>の哲学に根ざしています。その核心：「<span class="cs-highlight">変わらないものは変化だけ</span>」。六十四卦は人生の流動的なパターンを表し、万物が水のように変化することを思い出させてくれます。🌊',
+    c2:'<span class="cs-highlight">五行</span>は、あなたと宇宙の中でエネルギーがどう流れ変容するかを示します。各元素には独自の性質とリズムがあります：<div class="wu-diagram" id="wuDiagram"><span class="wu-node">🌳 木 → 成長</span><span class="wu-node">🔥 火 → 輝き</span><span class="wu-node">⛰️ 土 → 基盤</span><span class="wu-node">⚔️ 金 → 洗練</span><span class="wu-node">🌊 水 → 流動</span></div><br><span class="cs-highlight">相生</span>（木→火→土→金→水→木）と<span class="cs-highlight">相剋</span>（木→土→水→火→金→木）。調和とは五行が共に踊ることです。🌀',
+    c3:'12の<span class="cs-highlight">干支</span>はそれぞれ元素の本質を持っています。西洋の星座と性格診断を組み合わせ、<span class="cs-highlight">QiCode</span>があなただけのエネルギーの指紋を描きます。古代の知恵と現代の自己発見の架け橋——これがあなたの<span class="cs-highlight">道</span>です。🍃'
+  },
+  ko:{
+    toggle:'📜 동양의 지혜 탐구',
+    t1:'역경 · I Ching',
+    t2:'오행 · Wu Xing',
+    t3:'동양과 현대의 나',
+    c1:'<span class="cs-highlight">『역경』</span>은 가장 오래된 중국 고전 중 하나로, <span class="cs-highlight">도</span>와 <span class="cs-highlight">음양</span> 철학에 뿌리를 둡니다. 핵심 가르침: "<span class="cs-highlight">유일한 상수는 변화다</span>". 64괘는 인생의 유동적 패턴을 나타내며, 만물이 물처럼 변화함을 상기시킵니다.🌊',
+    c2:'<span class="cs-highlight">오행</span>은 당신과 우주 안에서 에너지가 어떻게 흐르고 변환되는지 설명합니다. 각 원소는 고유한 성질과 리듬을 가집니다:<div class="wu-diagram" id="wuDiagram"><span class="wu-node">🌳 나무 → 성장</span><span class="wu-node">🔥 불 → 빛남</span><span class="wu-node">⛰️ 흙 → 기반</span><span class="wu-node">⚔️ 쇠 → 정제</span><span class="wu-node">🌊 물 → 흐름</span></div><br><span class="cs-highlight">상생</span>（목→화→토→금→수→목）과 <span class="cs-highlight">상극</span>（목→토→수→화→금→목）. 진정한 조화는 다섯이 함께 춤출 때입니다.🌀',
+    c3:'12<span class="cs-highlight">띠</span>는 각각 선천적 원소의 본질을 지닙니다. 서양 별자리와 성격 테스트를 결합하여, <span class="cs-highlight">QiCode</span>가 당신만의 독특한 에너지 지문을 그려냅니다. 고대의 지혜와 현대의 자기 발견 사이의 다리—이것이 당신의 <span class="cs-highlight">도</span>입니다.🍃'
+  },
+  ar:{
+    toggle:'📜 اكتشف الحكمة الشرقية',
+    t1:'كتاب التغيرات · I Ching',
+    t2:'العناصر الخمسة · Wu Xing',
+    t3:'الشرق يلتقي بك',
+    c1:'<span class="cs-highlight">كتاب التغيرات</span> (آي تشينغ) هو أحد أقدم الكلاسيكيات الصينية، متجذر في فلسفة <span class="cs-highlight">الطاو</span> (الطريق) وتفاعل <span class="cs-highlight">الين</span> و<span class="cs-highlight">اليانغ</span>. تعليمه الأساسي: "<span class="cs-highlight">الثابت الوحيد هو التغيير</span>". تمثل الأشكال الـ64 أنماط الحياة المتغيرة—لتذكرنا بأن كل الأشياء تتحول كالماء.🌊',
+    c2:'<span class="cs-highlight">العناصر الخمسة</span> (وو شينغ) تصف كيف تتدفق الطاقة وتتحول داخلك وفي الكون. لكل عنصر طبيعته وإيقاعه الخاص:<div class="wu-diagram" id="wuDiagram"><span class="wu-node">🌳 خشب → نمو</span><span class="wu-node">🔥 نار → إشراق</span><span class="wu-node">⛰️ تراب → أساس</span><span class="wu-node">⚔️ معدن → تنقية</span><span class="wu-node">🌊 ماء → تدفق</span></div><br>إنها تخلق (<span class="cs-highlight">شنغ</span>) وتتحكم (<span class="cs-highlight">كه</span>) ببعضها: خشب→نار→تراب→معدن→ماء→خشب. التناغم الحقيقي هو عندما ترقص الخمسة معاً.🌀',
+    c3:'تحمل <span class="cs-highlight">الأبراج الصينية الـ12</span> كل منها جوهراً عنصرياً فطرياً. بدمج برجك الغربي واختبار الشخصية، يرسم <span class="cs-highlight">QiCode</span> بصمة طاقتك الفريدة—جسر بين الحكمة القديمة واكتشاف الذات الحديث. هذا هو <span class="cs-highlight">طاو</span> حياتك.🍃'
+  },
+  es:{
+    toggle:'📜 Descubre la Sabiduría Oriental',
+    t1:'Yi Jing · I Ching',
+    t2:'Wu Xing · Cinco Elementos',
+    t3:'Oriente Te Encuentra',
+    c1:'El <span class="cs-highlight">I Ching</span> (Libro de los Cambios) es uno de los clásicos chinos más antiguos. Se basa en la filosofía del <span class="cs-highlight">Tao</span> y la interacción del <span class="cs-highlight">Yin</span> y <span class="cs-highlight">Yang</span>. Su enseñanza central: "<span class="cs-highlight">la única constante es el cambio</span>". Los 64 hexagramas representan los patrones fluidos de la vida—recordándonos que todo se transforma como el agua.🌊',
+    c2:'Los <span class="cs-highlight">Cinco Elementos</span> (Wu Xing) describen cómo fluye y se transforma la energía dentro de ti. Cada elemento tiene su propia naturaleza y ritmo:<div class="wu-diagram" id="wuDiagram"><span class="wu-node">🌳 Madera → Crecer</span><span class="wu-node">🔥 Fuego → Brillar</span><span class="wu-node">⛰️ Tierra → Cimentar</span><span class="wu-node">⚔️ Metal → Refinar</span><span class="wu-node">🌊 Agua → Fluir</span></div><br>Se crean (<span class="cs-highlight">Sheng</span>) y se controlan (<span class="cs-highlight">Ke</span>): Madera→Fuego→Tierra→Metal→Agua→Madera. La verdadera armonía es cuando los cinco bailan juntos.🌀',
+    c3:'Los 12 <span class="cs-highlight">animales del zodiaco chino</span> llevan cada uno una esencia elemental innata. Combinado con tu signo zodiacal y test de personalidad, <span class="cs-highlight">QiCode</span> traza tu huella energética única—un puente entre la sabiduría ancestral y el autodescubrimiento moderno. Este es tu <span class="cs-highlight">Tao</span> personal.🍃'
+  },
+  fr:{
+    toggle:'📜 Découvrez la Sagesse Orientale',
+    t1:'Yi Jing · I Ching',
+    t2:'Wu Xing · Cinq Éléments',
+    t3:'L\'Orient Vous Rencontre',
+    c1:'Le <span class="cs-highlight">Yi Jing</span> (Livre des Changements) est l\'un des plus anciens classiques chinois. Il est ancré dans la philosophie du <span class="cs-highlight">Tao</span> et l\'interaction du <span class="cs-highlight">Yin</span> et du <span class="cs-highlight">Yang</span>. Son enseignement central: "<span class="cs-highlight">la seule constante est le changement</span>". Les 64 hexagrammes représentent les motifs fluides de la vie—nous rappelant que tout se transforme comme l\'eau.🌊',
+    c2:'Les <span class="cs-highlight">Cinq Éléments</span> (Wu Xing) décrivent comment l\'énergie circule et se transforme en vous. Chaque élément a sa propre nature et son rythme:<div class="wu-diagram" id="wuDiagram"><span class="wu-node">🌳 Bois → Croître</span><span class="wu-node">🔥 Feu → Briller</span><span class="wu-node">⛰️ Terre → Ancrer</span><span class="wu-node">⚔️ Métal → Raffiner</span><span class="wu-node">🌊 Eau → Couler</span></div><br>Ils se créent (<span class="cs-highlight">Sheng</span>) et se contrôlent (<span class="cs-highlight">Ke</span>): Bois→Feu→Terre→Métal→Eau→Bois. L\'harmonie véritable est quand les cinq dansent ensemble.🌀',
+    c3:'Les 12 <span class="cs-highlight">animaux du zodiaque chinois</span> portent chacun une essence élémentaire innée. Combiné à votre signe zodiacal et test de personnalité, <span class="cs-highlight">QiCode</span> trace votre empreinte énergétique unique—un pont entre la sagesse ancienne et la découverte de soi moderne. C\'est votre <span class="cs-highlight">Tao</span> personnel.🍃'
+  }
+};
+function refreshCultural(){
+  var cl=CULTURAL_LANG[currentLang]||CULTURAL_LANG.en;
+  var tg=document.getElementById('culturalToggleLabel');
+  if(tg)tg.textContent=cl.toggle;
+  var t1=document.getElementById('csTitle1');if(t1)t1.textContent=cl.t1;
+  var t2=document.getElementById('csTitle2');if(t2)t2.textContent=cl.t2;
+  var t3=document.getElementById('csTitle3');if(t3)t3.textContent=cl.t3;
+  var c1=document.getElementById('csContent1');if(c1)c1.innerHTML=cl.c1;
+  var c2=document.getElementById('csContent2');if(c2)c2.innerHTML=cl.c2;
+  var c3=document.getElementById('csContent3');if(c3)c3.innerHTML=cl.c3;
+}
+refreshCultural();
+function toggleCultural(){var b=document.getElementById('culturalBody');var t=document.getElementById('culturalToggle');var is=b.classList.contains('open');if(is){b.classList.remove('open');t.classList.remove('open');}else{b.classList.add('open');t.classList.add('open');}}
 function tq(i){return QUIZ_LANG[currentLang]?.[i]||QUIZ_LANG.en[i]||QUESTIONS[i];}
 function tqo(i,j){return (QUIZ_LANG[currentLang]?.[i]?.o||QUIZ_LANG.en[i]?.o||[])[j]||'';}
 
